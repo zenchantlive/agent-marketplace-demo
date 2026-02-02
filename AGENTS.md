@@ -6,16 +6,18 @@ A 2D pixel-art desktop application that visualizes multi-agent systems in real-t
 
 ## Tech Stack
 
-**Frontend:**
+**Frontend (Web-First):**
 - React 19 + TypeScript
+- Vite (Build tool & dev server)
 - Three.js + React Three Fiber (2D pixel art rendering)
-- Tauri 2.x (Lightweight desktop wrapper)
 - shadcn/ui (UI components)
 
 **Backend:**
 - Python FastAPI (Async HTTP server)
 - LangGraph (Agent orchestration - state-of-the-art)
 - OpenAI GPT-4o-mini (LLM, can switch to local)
+
+**Optional Later:** Tauri (for standalone desktop wrapper)
 
 ## Agent Roles & Council
 
@@ -32,7 +34,6 @@ All agents are fungible generalists. Roles are for coordination, not expertise.
 
 ```
 agent-marketplace-demo/
-├── src-tauri/              # Tauri Rust backend
 ├── src/                    # React + Three.js frontend
 │   ├── components/         # React components
 │   ├── hooks/              # Custom React hooks

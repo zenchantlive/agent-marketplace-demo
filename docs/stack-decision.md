@@ -1,108 +1,93 @@
-# Tech Stack Decision
+# Tech Stack Decision (Revised: Web-First)
 
-## Final Choice: TypeScript + Three.js + Vercel AI SDK (via Tauri)
+## Final Choice: Web-First (Vite + React + Three.js) with Tauri Option
 
 **Decision Date:** February 2, 2026
 **Build Mode:** Fully autonomous by OpenClaw agents
+**Deployment:** Web (Vercel/Netlify) → Optional Tauri wrapper later
+
+---
+
+## Why Web-First?
+
+| Criterion | Web-First | Tauri-First |
+|-----------|-----------|-------------|
+| **Time to Demo** | ⭐ Fastest (days) | Slower (weeks) |
+| **Sharing** | ⭐ URL only | Download + install |
+| **Iterating** | ⭐ Fast (hot reload) | Slower (rebuild) |
+| **Deployment** | ⭐ One command | Multi-platform builds |
+| **Performance** | Good (60 FPS) | ⭐ Best |
+| **Offline** | Needs internet | ⭐ Works offline |
+| **OS Access** | Limited | ⭐ Full native |
+
+**For a demo, web-first wins.** We can wrap in Tauri later if needed.
 
 ---
 
 ## Stack Components
 
-### Frontend
+### Frontend (Web-First)
 - **React 19** - UI framework
-- **Three.js r160** - 3D/2D rendering engine (using Sprite/Points for 2D pixel art)
+- **Three.js r160** - 3D/2D rendering
 - **React Three Fiber (R3F)** - React renderer for Three.js
-- **@react-three/drei** - Helper components and controls
+- **@react-three/drei** - Helper components
 - **TypeScript** - Type safety
-- **Vite** - Build tool and dev server
-
-### Runtime
-- **Tauri 2.x** - Lightweight desktop wrapper (Rust backend + WebView frontend)
-- ~10MB bundle (vs ~150MB for Electron)
-- Better performance than Electron
+- **Vite** - Build tool and dev server (super fast HMR)
 
 ### Agent Backend
-- **Python 3.12** - Agent runtime
-- **FastAPI** - Async HTTP server for agent decisions
-- **LangGraph** - State machine-based agent orchestration (chosen over LangChain)
+- **Python FastAPI** - Async HTTP server
+- **LangGraph** - Agent orchestration
 - **LangChain OpenAI** - LLM integration
 - **pydantic** - Data validation
 
-### LLM
-- **OpenAI GPT-4o-mini** - Fast, cheap, intelligent
-- Can switch to **Ollama (Llama 3)** for local inference later
+### Deployment
+- **Vercel** - Frontend hosting (automatic)
+- **Render / Railway** - Python backend hosting
+- **or local development only** (no deployment needed for demo)
 
-### UI Components
-- **shadcn/ui** - Modern, accessible React components
-- **Radix UI** - Headless primitives
+### Optional: Tauri Wrapper (Later)
+If we need standalone app later:
+```bash
+npm create tauri-app@latest
+# Use existing web frontend as WebView
+```
 
 ---
 
-## Architecture Diagram
+## Architecture (Web-First)
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    Tauri Desktop App                         │
+│                    Browser (User)                          │
 │  ┌─────────────────────────────────────────────────────┐   │
-│  │           React + Three.js (WebView)                │   │
+│  │         React + Three.js (Local)                    │   │
 │  │  ┌─────────────────┐    ┌─────────────────────┐    │   │
 │  │  │  Agent Canvas   │    │   Control Panel     │    │   │
 │  │  │  (Three.js)     │    │   (shadcn/ui)       │    │   │
-│  │  │  - 2D sprites   │    │   - Agent list      │    │   │
-│  │  │  - Click events │    │   - Task queue      │    │   │
-│  │  │  - Animations   │    │   - Debug view      │    │   │
 │  │  └─────────────────┘    └─────────────────────┘    │   │
 │  └─────────────────────────────────────────────────────┘   │
 │                           │                                   │
-│                    Tauri IPC / HTTP                          │
+│                    HTTP / WebSocket                          │
 │                           │                                   │
 │                           ▼                                   │
 │  ┌─────────────────────────────────────────────────────┐   │
-│  │         Python FastAPI Agent Server (Background)    │   │
+│  │         Python FastAPI Agent Server                 │   │
 │  │  ┌─────────────────────────────────────────────┐    │   │
 │  │  │          LangGraph Agent Engine             │    │   │
-│  │  │  - Perception nodes (what agents see)       │    │   │
-│  │  │  - Reasoning nodes (LLM decisions)          │    │   │
-│  │  │  - Action nodes (what agents do)            │    │   │
-│  │  └─────────────────────────────────────────────┘    │   │
 │  └─────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────┘
+
+Hosting:
+- Frontend: Vercel (static build)
+- Backend: Render / Railway / local (Python API)
 ```
 
 ---
 
-## Why This Stack Over Bevy + Rust?
-
-| Criterion | Bevy + Rust | Tauri + Three.js |
-|-----------|-------------|------------------|
-| **Learning Curve** | High (Rust + ECS) | Medium (React + TS) |
-| **Development Speed** | Medium | ⭐ Fast |
-| **Interactivity** | Good | ⭐ Excellent (React) |
-| **Clickability** | Manual raycasting | ⭐ Native React events |
-| **Performance** | ⭐ Best (native) | Good (WebGL) |
-| **Agent Framework** | Python via FFI | ⭐ LangGraph (native) |
-| **Community** | Medium | ⭐ Largest |
-| **Documentation** | Good | ⭐ Excellent |
-| **Build Autonomy** | Harder | ⭐ Easier |
-
-**Key Deciding Factors:**
-1. I'm building this **fully autonomously** - React ecosystem has more examples/tutorials
-2. **Clickable agents with details** is a core requirement - React handles this natively
-3. **Modern agent frameworks** - LangGraph is state-of-the-art and Python-native
-4. **Performance is sufficient** - 10,000 agents at 60FPS is plenty for this demo
-
----
-
-## Project Structure
+## Project Structure (Web-First)
 
 ```
 agent-marketplace-demo/
-├── src-tauri/              # Tauri Rust backend
-│   ├── src/
-│   ├── Cargo.toml
-│   └── tauri.conf.json
-│
 ├── src/                    # React + Three.js frontend
 │   ├── components/
 │   │   ├── AgentCanvas.tsx        # Three.js agent visualization
@@ -118,13 +103,11 @@ agent-marketplace-demo/
 │   │   ├── agents.ts              # Agent ECS (lightweight)
 │   │   └── three-helpers.ts       # Three.js utilities
 │   ├── App.tsx
-│   ├── main.tsx
-│   └── vite-env.d.ts
+│   └── main.tsx
 │
 ├── agent-backend/          # Python FastAPI + LangGraph
 │   ├── main.py              # FastAPI server
 │   ├── agents/
-│   │   ├── __init__.py
 │   │   ├── langgraph_graph.py    # LangGraph state machine
 │   │   ├── perception.py         # Agent perception logic
 │   │   ├── reasoning.py          # LLM reasoning
@@ -137,12 +120,12 @@ agent-marketplace-demo/
 │   ├── sprites/
 │   │   ├── agent-idle.png
 │   │   ├── agent-working.png
-│   │   ├── agent-communicating.png
 │   │   └── background.png
-│   └── sounds/                  # Empty for now (no sound)
+│   └── sounds/                  # Empty for now
 │
 ├── docs/
 │   ├── stack-decision.md
+│   ├── tauri-best-practices.md   # Tauri reference (if needed later)
 │   ├── research.md
 │   ├── mvp-plan.md
 │   └── architecture.md
@@ -156,99 +139,70 @@ agent-marketplace-demo/
 
 ---
 
-## Implementation Phases
+## Implementation Phases (Web-First)
 
-### Phase 1: Project Setup (Week 1)
-- [ ] Initialize Tauri + React + TypeScript project
-- [ ] Set up Vite, Three.js, React Three Fiber
-- [ ] Install shadcn/ui components
-- [ ] Set up Python FastAPI server
-- [ ] Set up LangGraph basic graph
-- [ ] Create basic agent sprite assets (placeholder pixel art)
+### Phase 1: Web Setup (Week 1)
+- [ ] Initialize Vite + React + TypeScript project
+- [ ] Install Three.js + React Three Fiber
+- [ ] Set up shadcn/ui components
+- [ ] Create basic agent sprite assets
 - [ ] Render first agent on screen
 
 ### Phase 2: Core Visualization (Week 2)
-- [ ] Implement ECS-like agent system in React (agents, positions, states)
+- [ ] Implement agent system (agents, positions, states)
 - [ ] Render multiple agents as sprites
-- [ ] Add agent states (idle, working, communicating, moving)
+- [ ] Add agent states (idle, working, communicating)
 - [ ] Click detection for agents
-- [ ] Agent detail panel (click to see info)
-- [ ] Basic camera controls (pan/zoom)
+- [ ] Agent detail panel
+- [ ] Camera controls (pan/zoom)
 
-### Phase 3: Agent Integration (Week 3)
-- [ ] Connect React frontend to Python backend
-- [ ] Implement LangGraph perception (what agents see)
-- [ ] Implement LangGraph reasoning (LLM decisions)
-- [ ] Implement LangGraph action (agent behaviors)
-- [ ] Real-time agent updates from backend
-- [ ] Visualize agent communication (message bubbles, lines)
+### Phase 3: Agent Backend (Week 3)
+- [ ] Set up Python FastAPI server
+- [ ] Implement LangGraph perception
+- [ ] Implement LangGraph reasoning (LLM)
+- [ ] Implement LangGraph action
+- [ ] Connect frontend to backend
+- [ ] Visualize agent communication
 
 ### Phase 4: Task System (Week 4)
 - [ ] Define task types
 - [ ] Task assignment to agents
 - [ ] Task progress visualization
-- [ ] Task completion detection
 - [ ] Task queue UI
 
-### Phase 5: Polish (Week 5)
+### Phase 5: Polish & Deployment (Week 5)
 - [ ] Pixel art improvements
-- [ ] Agent animations (idle, move, work)
-- [ ] UI polish (better panels, tooltips)
-- [ ] Debug panel (decision visualization, agent reasoning)
-- [ ] Performance optimization (InstancedMesh for many agents)
-- [ ] Documentation
+- [ ] Agent animations
+- [ ] UI polish
+- [ ] Debug panel
+- [ ] Performance optimization
+- [ ] Deploy to Vercel (frontend)
+- [ ] Deploy backend or run locally
+
+### Phase 6 (Optional): Tauri Wrapper (Later)
+- [ ] Wrap web app in Tauri
+- [ ] Test native performance
+- [ ] Create desktop builds
 
 ---
 
-## MVP Feature Checklist
+## Performance Targets (Web)
 
-### Visualization
-- [x] Pixel art sprites
-- [ ] Multiple agent types (colors)
-- [ ] Agent states (idle, working, communicating)
-- [ ] Agent movement animation
-- [ ] Background scene
-
-### Interactivity
-- [ ] Click agent → show details panel
-- [ ] Drag agents (optional)
-- [ ] Pan/zoom camera
-- [ ] Hover tooltips
-
-### Agent System
-- [ ] Agents perceive nearby agents/objects
-- [ ] Agents reason (LLM-based decisions)
-- [ ] Agents act (move, interact, work)
-- [ ] Agent-to-agent communication
-- [ ] Task assignment
-
-### UI
-- [ ] Agent list panel (status, state)
-- [ ] Task queue display
-- [ ] Debug panel (LLM reasoning, decisions)
-- [ ] Controls (pause/resume, speed)
-
----
-
-## Performance Targets
-
-- **Agent Count:** 100-1000 agents (MVP), scale to 10,000 with optimization
+- **Agent Count:** 100-1000 agents (MVP), 10,000 with optimization
 - **Frame Rate:** 60 FPS
-- **Agent Decision Latency:** <500ms for 100 agents (GPT-4o-mini)
-- **Bundle Size:** <50MB (Tauri)
+- **Bundle Size:** <5MB (gzipped)
+- **Agent Decision Latency:** <500ms for 100 agents
 
 ---
 
 ## Next Actions
 
-1. Create detailed implementation plan for each phase
-2. Set up Tauri + React + TypeScript project
-3. Create Python FastAPI + LangGraph backend structure
-4. Generate placeholder pixel art assets
-5. Implement Phase 1 (Project Setup)
+1. Create Tauri best practices doc
+2. Update project structure to web-first
+3. Start Phase 1: Web Setup
 
 ---
 
-**Decision Made:** February 2, 2026
-**Agent Build Mode:** Fully autonomous
+**Decision Revised:** February 2, 2026
+**Build Mode:** Web-first, Tauri optional
 **Expected Completion:** ~5 weeks

@@ -10,11 +10,11 @@ A local 2D pixel-art game that visualizes multi-agent collaboration in real-time
 
 ## Tech Stack
 
-- **Frontend:** React 19 + Three.js + TypeScript (via Tauri)
-- **Runtime:** Tauri 2.x (Lightweight desktop wrapper)
+- **Frontend:** React 19 + Three.js + TypeScript (Web-first via Vite)
 - **Agents:** Python FastAPI + LangGraph (State-of-the-art agent orchestration)
 - **LLM:** OpenAI GPT-4o-mini (can switch to local)
 - **UI:** shadcn/ui components
+- **Optional Later:** Tauri for standalone desktop wrapper
 
 ## Features (MVP)
 
@@ -27,7 +27,8 @@ A local 2D pixel-art game that visualizes multi-agent collaboration in real-time
 
 ## Documentation
 
-- [Stack Decision](docs/stack-decision.md) - Why this stack?
+- [Stack Decision](docs/stack-decision.md) - Why this stack? (Web-first)
+- [Tauri Best Practices](docs/tauri-best-practices.md) - Tauri reference (for optional wrapper)
 - [Research](docs/research.md) - Tech stack research
 - [MVP Plan](docs/mvp-plan.md) - Feature roadmap
 - [Architecture](docs/architecture.md) - System architecture
