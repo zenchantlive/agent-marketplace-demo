@@ -1,40 +1,78 @@
 import { useState } from 'react'
-import ThreeScene from './components/ThreeScene'
+import AgentCanvas from './components/AgentCanvas'
 import { Button } from './components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './components/ui/tabs'
 
+interface AgentData {
+  id: number
+  position: number[]
+  state: string
+  nearby_agents?: number[]
+  reasoning?: string
+}
+
 function App() {
   const [count, setCount] = useState(0)
-  const [activeTab, setActiveTab] = useState<'three' | 'react'>('three')
+  const [activeTab, setActiveTab] = useState<'agents' | 'react'>('agents')
+  const [selectedAgent, setSelectedAgent] = useState<AgentData | null>(null)
 
   return (
     <div className="min-h-screen p-8 bg-background text-foreground">
       <header className="text-center mb-8">
         <h1 className="text-5xl font-bold mb-2">Agent Marketplace Demo</h1>
         <p className="text-muted-foreground text-lg">
-          2D Pixel-Art Multi-Agent System Visualization
+          2D Pixel-Art Multi-Agent System Visualization with LangGraph Backend
         </p>
       </header>
 
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'three' | 'react')} className="w-full max-w-6xl mx-auto">
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'agents' | 'react')} className="w-full max-w-6xl mx-auto">
         <TabsList className="grid w-full grid-cols-2 h-auto mb-6">
-          <TabsTrigger value="three">Three.js Scene</TabsTrigger>
+          <TabsTrigger value="agents">Live Agents</TabsTrigger>
           <TabsTrigger value="react">React Components</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="three" className="mt-6">
+        <TabsContent value="agents" className="mt-6 space-y-6">
           <Card className="min-h-[500px] p-0 overflow-hidden">
             <CardHeader className="p-6">
-              <CardTitle>Three.js Demo Scene</CardTitle>
+              <CardTitle>Multi-Agent Visualization</CardTitle>
               <CardDescription>
-                Rendering a basic 2D sprite with React Three Fiber
+                Real-time agent rendering from LangGraph backend (http://localhost:8000)
               </CardDescription>
             </CardHeader>
             <CardContent className="p-0">
-              <ThreeScene />
+              <AgentCanvas
+                onAgentClick={(agent) => setSelectedAgent(agent)}
+              />
             </CardContent>
           </Card>
+
+          {selectedAgent && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Agent Details - #{selectedAgent.id}</CardTitle>
+                <CardDescription>
+                  Current state and position from backend
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex justify-between items-center p-3 bg-secondary rounded-lg">
+                  <span className="font-semibold">State:</span>
+                  <span className="font-mono">{selectedAgent.state}</span>
+                </div>
+                <div className="flex justify-between items-center p-3 bg-secondary rounded-lg">
+                  <span className="font-semibold">Position:</span>
+                  <span className="font-mono">[{selectedAgent.position.join(', ')}]</span>
+                </div>
+                <div className="flex justify-between items-center p-3 bg-secondary rounded-lg">
+                  <span className="font-semibold">Nearby Agents:</span>
+                  <span className="font-mono">
+                    {selectedAgent.nearby_agents?.join(', ') || 'None'}
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
         <TabsContent value="react" className="mt-6 space-y-6">
@@ -67,11 +105,23 @@ function App() {
                 <span className="text-green-400">✅ Ready</span>
               </div>
               <div className="flex justify-between items-center p-3 bg-secondary rounded-lg">
+                <span className="font-semibold">LangGraph:</span>
+                <span className="text-green-400">✅ Ready</span>
+              </div>
+              <div className="flex justify-between items-center p-3 bg-secondary rounded-lg">
+                <span className="font-semibold">FastAPI:</span>
+                <span className="text-green-400">✅ Ready</span>
+              </div>
+              <div className="flex justify-between items-center p-3 bg-secondary rounded-lg">
                 <span className="font-semibold">Tailwind CSS:</span>
                 <span className="text-green-400">✅ Ready</span>
               </div>
               <div className="flex justify-between items-center p-3 bg-secondary rounded-lg">
                 <span className="font-semibold">shadcn/ui:</span>
+                <span className="text-green-400">✅ Ready</span>
+              </div>
+              <div className="flex justify-between items-center p-3 bg-secondary rounded-lg">
+                <span className="font-semibold">Backend Integration:</span>
                 <span className="text-green-400">✅ Ready</span>
               </div>
             </CardContent>

@@ -1,6 +1,7 @@
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls, Text } from '@react-three/drei'
 import { Suspense } from 'react'
+import BackgroundScene from './BackgroundScene'
 
 function ThreeScene() {
   return (
@@ -14,6 +15,9 @@ function ThreeScene() {
           <ambientLight intensity={0.5} />
           <pointLight position={[10, 10, 10]} intensity={1} />
           <pointLight position={[-10, -10, -10]} intensity={0.5} />
+
+          {/* Background Scene - Office/Workspace Environment */}
+          <BackgroundScene width={20} height={15} />
 
           {/* Demo Sprite - Simple colored square representing an agent */}
           <mesh position={[0, 0, 0]}>
