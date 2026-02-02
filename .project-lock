@@ -1,0 +1,9 @@
+# PROJECT NAME
+ROOT: /home/clawdbot/agent-marketplace-demo
+
+IGNORE:
+  - node_modules/
+  - dist/
+  - .git/
+  - .beads/
+  - .vscode/

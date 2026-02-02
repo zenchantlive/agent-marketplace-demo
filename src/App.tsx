@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import AgentCanvas from './components/AgentCanvas'
+import TaskQueue, { Task } from './components/TaskQueue'
 import { Button } from './components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './components/ui/tabs'
@@ -16,6 +17,12 @@ function App() {
   const [count, setCount] = useState(0)
   const [activeTab, setActiveTab] = useState<'agents' | 'react'>('agents')
   const [selectedAgent, setSelectedAgent] = useState<AgentData | null>(null)
+
+  const demoTasks: Task[] = [
+    { id: 't1', name: 'Design UI', status: 'pending', assignee: 'Agent 1' },
+    { id: 't2', name: 'Implement backend', status: 'in_progress', assignee: 'Agent 2' },
+    { id: 't3', name: 'Write tests', status: 'completed', assignee: 'Agent 3' },
+  ]
 
   return (
     <div className="min-h-screen p-8 bg-background text-foreground">
@@ -73,6 +80,16 @@ function App() {
               </CardContent>
             </Card>
           )}
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Task Queue</CardTitle>
+              <CardDescription>Active tasks assigned to agents</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <TaskQueue tasks={demoTasks} />
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="react" className="mt-6 space-y-6">
