@@ -4,6 +4,7 @@ import { OrbitControls, Text } from '@react-three/drei'
 import { Suspense } from 'react'
 import * as THREE from 'three'
 import { useAgentBackend } from '../hooks/useAgentBackend'
+import { interpolatePosition, reachedTarget, Vec2 } from './movement'
 
 interface AgentData {
   id: number
@@ -19,7 +20,10 @@ interface AgentSpriteProps {
 }
 
 function AgentSprite({ agent, onClick }: AgentSpriteProps) {
-  const meshRef = useRef<THREE.Mesh>(null)
+  const groupRef = useRef<THREE.Group>(null)
+  const positionRef = useRef<Vec2>([agent.position[0] ?? 0, agent.position[1] ?? 0])
+  const targetRef = useRef<Vec2>([agent.position[0] ?? 0, agent.position[1] ?? 0])
+  const lastTargetTimeRef = useRef<number>(0)
   
   // Get color based on state
   const getColor = () => {
@@ -35,21 +39,31 @@ function AgentSprite({ agent, onClick }: AgentSpriteProps) {
     }
   }
 
-  // Simple animation - bobbing effect
+  // Smooth movement + bobbing
   useFrame((state) => {
-    if (meshRef.current) {
-      meshRef.current.position.y = Math.sin(state.clock.elapsedTime * 2 + agent.id) * 0.05
+    if (!groupRef.current) return
+
+    // Update target every 3 seconds or when reached
+    const elapsed = state.clock.elapsedTime
+    if (elapsed - lastTargetTimeRef.current > 3 || reachedTarget(positionRef.current, targetRef.current, 0.1)) {
+      targetRef.current = [
+        (Math.random() - 0.5) * 6,
+        (Math.random() - 0.5) * 4,
+      ]
+      lastTargetTimeRef.current = elapsed
     }
+
+    // Interpolate toward target
+    positionRef.current = interpolatePosition(positionRef.current, targetRef.current, 0.02)
+
+    // Apply position + bobbing
+    groupRef.current.position.x = positionRef.current[0]
+    groupRef.current.position.y = positionRef.current[1] + Math.sin(elapsed * 2 + agent.id) * 0.05
   })
 
-  // Provide default values for position
-  const x = agent.position[0] ?? 0
-  const y = agent.position[1] ?? 0
-
   return (
-    <group position={[x, y, 0]}>
+    <group ref={groupRef} position={[0, 0, 0]}>
       <mesh
-        ref={meshRef}
         onClick={(e) => {
           e.stopPropagation()
           onClick(agent)
