@@ -266,7 +266,7 @@ class OpenClawIntegration:
     
     async def _poll_loop(self):
         """Background polling loop for agent updates"""
-        while self.__running:
+        while self._running:
             try:
                 agents = await self.client.get_active_agents()
                 visualization_agents = [
