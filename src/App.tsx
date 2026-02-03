@@ -20,6 +20,12 @@ function App() {
   const [selectedAgent, setSelectedAgent] = useState<AgentData | null>(null)
   const { paused, toggle } = usePauseResume()
 
+  const [agents, setAgents] = useState<AgentData[]>([
+    { id: 1, position: [-2, 0, 0], state: 'communicating', reasoning: 'Chatting with Agent 3' },
+    { id: 2, position: [0, 0, 0], state: 'working', reasoning: 'Building features' },
+    { id: 3, position: [2, 0, 0], state: 'communicating', reasoning: 'Chatting with Agent 1' },
+  ])
+
   const demoTasks: Task[] = [
     { id: 't1', name: 'Design UI', status: 'pending', assignee: 'Agent 1' },
     { id: 't2', name: 'Implement backend', status: 'in_progress', assignee: 'Agent 2' },
@@ -58,6 +64,7 @@ function App() {
               <AgentCanvas
                 onAgentClick={(agent) => setSelectedAgent(agent)}
                 paused={paused}
+                agents={agents}
               />
             </CardContent>
           </Card>

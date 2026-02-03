@@ -1,11 +1,12 @@
-import { useRef } from 'react'
+import { useRef, useMemo } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
-import { OrbitControls, Text } from '@react-three/drei'
+import { OrbitControls, Text, Line } from '@react-three/drei'
 import { Suspense } from 'react'
 import * as THREE from 'three'
 import { useAgentBackend } from '../hooks/useAgentBackend'
 import { interpolatePosition, reachedTarget, Vec2 } from './movement'
 import { getAnimationFrame, getSpriteColor } from './spriteAnimation'
+import { shouldDrawLine, getLineColor } from './connectionLines'
 
 interface AgentData {
   id: number
@@ -19,9 +20,10 @@ interface AgentSpriteProps {
   agent: AgentData
   onClick: (agent: AgentData) => void
   paused?: boolean
+  positionsMap: React.MutableRefObject<Record<number, Vec2>>
 }
 
-function AgentSprite({ agent, onClick, paused = false }: AgentSpriteProps) {
+function AgentSprite({ agent, onClick, paused = false, positionsMap }: AgentSpriteProps) {
   const groupRef = useRef<THREE.Group>(null)
   const positionRef = useRef<Vec2>([agent.position[0] ?? 0, agent.position[1] ?? 0])
   const targetRef = useRef<Vec2>([agent.position[0] ?? 0, agent.position[1] ?? 0])
@@ -65,6 +67,9 @@ function AgentSprite({ agent, onClick, paused = false }: AgentSpriteProps) {
     // Apply position + bobbing
     groupRef.current.position.x = positionRef.current[0]
     groupRef.current.position.y = positionRef.current[1] + Math.sin(elapsed * 2 + agent.id) * 0.05
+    
+    // Update shared positions map
+    positionsMap.current[agent.id] = positionRef.current
   })
 
   // Get current animation frame
@@ -113,15 +118,64 @@ function AgentSprite({ agent, onClick, paused = false }: AgentSpriteProps) {
   )
 }
 
+function ConnectionLines({ agents, positionsMap }: { agents: AgentData[], positionsMap: React.MutableRefObject<Record<number, Vec2>> }) {
+  const geometryRef = useRef<THREE.BufferGeometry>(null)
+  
+  useFrame(() => {
+    if (!geometryRef.current) return
+    
+    const positions: number[] = []
+    
+    for (let i = 0; i < agents.length; i++) {
+      for (let j = i + 1; j < agents.length; j++) {
+        const a1 = agents[i]
+        const a2 = agents[j]
+        
+        if (shouldDrawLine(a1.state, a2.state)) {
+           const p1 = positionsMap.current[a1.id]
+           const p2 = positionsMap.current[a2.id]
+           
+           if (p1 && p2) {
+             positions.push(p1[0], p1[1], 0)
+             positions.push(p2[0], p2[1], 0)
+           }
+        }
+      }
+    }
+    
+    geometryRef.current.setAttribute(
+      'position', 
+      new THREE.Float32BufferAttribute(positions, 3)
+    )
+    geometryRef.current.attributes.position.needsUpdate = true
+    // Explicitly set draw range to match number of points
+    geometryRef.current.setDrawRange(0, positions.length / 3)
+  })
+  
+  return (
+     <lineSegments>
+       <bufferGeometry ref={geometryRef} />
+       <lineBasicMaterial color={getLineColor('communicating')} linewidth={1} />
+     </lineSegments>
+  )
+}
+
 interface AgentCanvasProps {
   onAgentClick?: (agent: AgentData) => void
   paused?: boolean
+  agents?: AgentData[]
 }
 
-function AgentCanvasContent({ onAgentClick, paused = false }: { onAgentClick?: (agent: AgentData) => void; paused?: boolean }) {
-  const { agents, isLoading, error } = useAgentBackend()
+function AgentCanvasContent({ onAgentClick, paused = false, agentsProp }: { onAgentClick?: (agent: AgentData) => void; paused?: boolean; agentsProp?: AgentData[] }) {
+  const { agents: backendAgents, isLoading, error } = useAgentBackend()
   
-  if (isLoading) {
+  const agents = agentsProp || backendAgents
+  const showLoading = !agentsProp && isLoading
+  const showError = !agentsProp && error
+  
+  const positionsMap = useRef<Record<number, Vec2>>({})
+  
+  if (showLoading) {
     return (
       <group>
         <Text
@@ -137,7 +191,7 @@ function AgentCanvasContent({ onAgentClick, paused = false }: { onAgentClick?: (
     )
   }
 
-  if (error) {
+  if (showError) {
     return (
       <group>
         <Text
@@ -164,6 +218,8 @@ function AgentCanvasContent({ onAgentClick, paused = false }: { onAgentClick?: (
 
   return (
     <>
+      <ConnectionLines agents={agents} positionsMap={positionsMap} />
+
       {/* Render all agents */}
       {agents.map((agent) => (
         <AgentSprite
@@ -171,6 +227,7 @@ function AgentCanvasContent({ onAgentClick, paused = false }: { onAgentClick?: (
           agent={agent}
           onClick={onAgentClick || (() => {})}
           paused={paused}
+          positionsMap={positionsMap}
         />
       ))}
       
@@ -190,7 +247,7 @@ function AgentCanvasContent({ onAgentClick, paused = false }: { onAgentClick?: (
   )
 }
 
-export default function AgentCanvas({ onAgentClick, paused }: AgentCanvasProps) {
+export default function AgentCanvas({ onAgentClick, paused, agents }: AgentCanvasProps) {
   return (
     <div className="agent-canvas w-full h-full min-h-[400px] rounded-lg overflow-hidden bg-[#1a1a2e]">
       <Canvas
@@ -204,7 +261,7 @@ export default function AgentCanvas({ onAgentClick, paused }: AgentCanvasProps) 
           <pointLight position={[-10, -10, -10]} intensity={0.5} />
 
           {/* Agent content */}
-          <AgentCanvasContent onAgentClick={onAgentClick} paused={paused} />
+          <AgentCanvasContent onAgentClick={onAgentClick} paused={paused} agentsProp={agents} />
 
           {/* Camera Controls */}
           <OrbitControls
