@@ -7,6 +7,7 @@ import { useAgentBackend } from '../hooks/useAgentBackend'
 import { interpolatePosition, reachedTarget, Vec2 } from './movement'
 import { getAnimationFrame, getSpriteColor } from './spriteAnimation'
 import { shouldDrawLine, getLineColor } from './connectionLines'
+import { truncateMessage, shouldShowBubble } from './messageBubbles'
 
 interface AgentData {
   id: number
@@ -114,6 +115,26 @@ function AgentSprite({ agent, onClick, paused = false, positionsMap }: AgentSpri
       >
         {agent.state}
       </Text>
+
+      {/* Message Bubble */}
+      {shouldShowBubble(agent.state) && (
+        <group position={[0, 0.8, 0]}>
+          <mesh position={[0, 0, -0.05]}>
+            <planeGeometry args={[1.5, 0.4]} />
+            <meshStandardMaterial color="#3b82f6" opacity={0.8} transparent />
+          </mesh>
+          <Text
+            position={[0, 0, 0]}
+            fontSize={0.12}
+            color="white"
+            maxWidth={1.4}
+            anchorX="center"
+            anchorY="middle"
+          >
+            {truncateMessage(agent.reasoning || 'Communicating...')}
+          </Text>
+        </group>
+      )}
     </group>
   )
 }
