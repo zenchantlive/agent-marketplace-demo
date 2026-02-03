@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import AgentCanvas from './components/AgentCanvas'
 import TaskQueue, { Task } from './components/TaskQueue'
+import { usePauseResume } from './components/pauseResume'
 import { Button } from './components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './components/ui/tabs'
@@ -17,6 +18,7 @@ function App() {
   const [count, setCount] = useState(0)
   const [activeTab, setActiveTab] = useState<'agents' | 'react'>('agents')
   const [selectedAgent, setSelectedAgent] = useState<AgentData | null>(null)
+  const { paused, toggle } = usePauseResume()
 
   const demoTasks: Task[] = [
     { id: 't1', name: 'Design UI', status: 'pending', assignee: 'Agent 1' },
@@ -41,15 +43,21 @@ function App() {
 
         <TabsContent value="agents" className="mt-6 space-y-6">
           <Card className="min-h-[500px] p-0 overflow-hidden">
-            <CardHeader className="p-6">
-              <CardTitle>Multi-Agent Visualization</CardTitle>
-              <CardDescription>
-                Real-time agent rendering from LangGraph backend (http://localhost:8000)
-              </CardDescription>
+            <CardHeader className="p-6 flex flex-row items-start justify-between gap-4">
+              <div>
+                <CardTitle>Multi-Agent Visualization</CardTitle>
+                <CardDescription>
+                  Real-time agent rendering from LangGraph backend (http://localhost:8000)
+                </CardDescription>
+              </div>
+              <Button onClick={toggle} variant={paused ? 'destructive' : 'default'}>
+                {paused ? 'Resume' : 'Pause'}
+              </Button>
             </CardHeader>
             <CardContent className="p-0">
               <AgentCanvas
                 onAgentClick={(agent) => setSelectedAgent(agent)}
+                paused={paused}
               />
             </CardContent>
           </Card>

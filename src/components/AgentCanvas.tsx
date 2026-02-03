@@ -17,9 +17,10 @@ interface AgentData {
 interface AgentSpriteProps {
   agent: AgentData
   onClick: (agent: AgentData) => void
+  paused?: boolean
 }
 
-function AgentSprite({ agent, onClick }: AgentSpriteProps) {
+function AgentSprite({ agent, onClick, paused = false }: AgentSpriteProps) {
   const groupRef = useRef<THREE.Group>(null)
   const positionRef = useRef<Vec2>([agent.position[0] ?? 0, agent.position[1] ?? 0])
   const targetRef = useRef<Vec2>([agent.position[0] ?? 0, agent.position[1] ?? 0])
@@ -42,6 +43,9 @@ function AgentSprite({ agent, onClick }: AgentSpriteProps) {
   // Smooth movement + bobbing
   useFrame((state) => {
     if (!groupRef.current) return
+
+    // Skip movement updates if paused
+    if (paused) return
 
     // Update target every 3 seconds or when reached
     const elapsed = state.clock.elapsedTime
@@ -100,9 +104,10 @@ function AgentSprite({ agent, onClick }: AgentSpriteProps) {
 
 interface AgentCanvasProps {
   onAgentClick?: (agent: AgentData) => void
+  paused?: boolean
 }
 
-function AgentCanvasContent({ onAgentClick }: { onAgentClick?: (agent: AgentData) => void }) {
+function AgentCanvasContent({ onAgentClick, paused = false }: { onAgentClick?: (agent: AgentData) => void; paused?: boolean }) {
   const { agents, isLoading, error } = useAgentBackend()
   
   if (isLoading) {
@@ -154,6 +159,7 @@ function AgentCanvasContent({ onAgentClick }: { onAgentClick?: (agent: AgentData
           key={agent.id}
           agent={agent}
           onClick={onAgentClick || (() => {})}
+          paused={paused}
         />
       ))}
       
@@ -173,7 +179,7 @@ function AgentCanvasContent({ onAgentClick }: { onAgentClick?: (agent: AgentData
   )
 }
 
-export default function AgentCanvas({ onAgentClick }: AgentCanvasProps) {
+export default function AgentCanvas({ onAgentClick, paused }: AgentCanvasProps) {
   return (
     <div className="agent-canvas w-full h-full min-h-[400px] rounded-lg overflow-hidden bg-[#1a1a2e]">
       <Canvas
@@ -187,7 +193,7 @@ export default function AgentCanvas({ onAgentClick }: AgentCanvasProps) {
           <pointLight position={[-10, -10, -10]} intensity={0.5} />
 
           {/* Agent content */}
-          <AgentCanvasContent onAgentClick={onAgentClick} />
+          <AgentCanvasContent onAgentClick={onAgentClick} paused={paused} />
 
           {/* Camera Controls */}
           <OrbitControls
