@@ -5,6 +5,7 @@ import { Suspense } from 'react'
 import * as THREE from 'three'
 import { useAgentBackend } from '../hooks/useAgentBackend'
 import { interpolatePosition, reachedTarget, Vec2 } from './movement'
+import { getAnimationFrame, getSpriteColor } from './spriteAnimation'
 
 interface AgentData {
   id: number
@@ -25,22 +26,23 @@ function AgentSprite({ agent, onClick, paused = false }: AgentSpriteProps) {
   const positionRef = useRef<Vec2>([agent.position[0] ?? 0, agent.position[1] ?? 0])
   const targetRef = useRef<Vec2>([agent.position[0] ?? 0, agent.position[1] ?? 0])
   const lastTargetTimeRef = useRef<number>(0)
+  const animStartTimeRef = useRef<number>(Date.now())
   
-  // Get color based on state
-  const getColor = () => {
+  // Animation frame sets for different states
+  const getFrameSet = () => {
     switch (agent.state) {
       case 'idle':
-        return '#4ade80' // green
+        return [0, 1, 2] // 3 frames: idle animation
       case 'working':
-        return '#f97316' // orange
+        return [0, 1, 2, 3] // 4 frames: working animation
       case 'communicating':
-        return '#3b82f6' // blue
+        return [0, 1, 2, 3, 4] // 5 frames: communicating animation
       default:
-        return '#4ade80'
+        return [0, 1, 2]
     }
   }
 
-  // Smooth movement + bobbing
+  // Smooth movement + bobbing + sprite animation
   useFrame((state) => {
     if (!groupRef.current) return
 
@@ -65,6 +67,14 @@ function AgentSprite({ agent, onClick, paused = false }: AgentSpriteProps) {
     groupRef.current.position.y = positionRef.current[1] + Math.sin(elapsed * 2 + agent.id) * 0.05
   })
 
+  // Get current animation frame
+  const frameSet = getFrameSet()
+  const currentFrame = getAnimationFrame(frameSet, animStartTimeRef.current, Date.now(), 200) // 200ms per frame
+  const color = getSpriteColor(agent.state)
+
+  // Apply sprite animation effect (color shift for now, can use textures later)
+  const scale = 1 + (currentFrame * 0.1)
+
   return (
     <group ref={groupRef} position={[0, 0, 0]}>
       <mesh
@@ -72,9 +82,10 @@ function AgentSprite({ agent, onClick, paused = false }: AgentSpriteProps) {
           e.stopPropagation()
           onClick(agent)
         }}
+        scale={[scale, scale, 1]}
       >
         <boxGeometry args={[0.5, 0.5, 0.1]} />
-        <meshStandardMaterial color={getColor()} />
+        <meshStandardMaterial color={color} />
       </mesh>
       
       {/* Agent ID label */}
